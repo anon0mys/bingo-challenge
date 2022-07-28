@@ -1,53 +1,78 @@
-# 7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
-
-# 22 13 17 11  0
-#  8  2 23  4 24
-# 21  9 14 16  7
-#  6 10  3 18  5
-#  1 12 20 15 19
-
-#  3 15  0  2 22
-#  9 18 13 17  5
-# 19  8  7 25 23
-# 20 11 10 24  4
-# 14 21 16 12  6
-
-# 14 21 17 24  4
-# 10 16 15  9 19
-# 18  8 23 26 20
-# 22 11 13  6  5
-#  2  0 12  3  7
 from board import Board
 
 
-def play_bingo(input_file):
-    with open(input_file) as file:
-        lines = file.readlines()
-        inputs = lines[0].strip().split(',')
+class Bingo:
+    def __init__(self, input_file):
+        self.input_file = input_file
+        self.bingo_balls = None
+        self.boards = []
+        self.winning_board = None
+        self.winning_number = None
+        self.setup()
+        self.round = 1
+
+    def setup(self):
+        with open(self.input_file) as file:
+            file_data = file.readlines()
+            self.bingo_balls = self.build_bingo_balls(file_data[0])
+            self.boards = self.build_boards(file_data[2:])
+
+    def build_bingo_balls(self, inputs_line):
+        return inputs_line.strip().split(',')
+
+    def build_boards(self, board_lines):
         boards = []
-        board = Board()
-        for line in lines[2:]:
+        id = 1
+        board = Board(id=id)
+        for line in board_lines:
             if line == '\n':
                 boards.append(board)
-                board = Board()
+                id += 1
+                board = Board(id=id)
                 continue
             board.add(line)
         boards.append(board)
+        return boards
 
-    winning_board = None
-    winning_number = None
-
-    for number in inputs:
-        for board in boards:
-            board.mark(number)
-            if board.wins():
-                winning_number = number
-                winning_board = board
+    def play(self):
+        self.announce_start()
+        for bingo_ball in self.bingo_balls:
+            self.announce_round(bingo_ball)
+            self.round += 1
+            self.mark_boards(bingo_ball)
+            if self.winning_board:
+                self.announce_winner()
                 break
-        if winning_board:
-            break
 
-    print(winning_board.sum_unmarked() * int(winning_number))
+    def mark_boards(self, bingo_ball):
+        for board in self.boards:
+            board.mark(bingo_ball)
+            if board.wins():
+                self.winning_number = bingo_ball
+                self.winning_board = board
+                break
+
+    def score(self):
+        return self.winning_board.sum_unmarked() * int(self.winning_number)
+
+    def announce_round(self, bingo_ball):
+        print(f"~~~ Round {self.round} ~~~")
+        print(f"Your bingo ball is: {bingo_ball}")
+
+    def announce_start(self):
+        print(f"~~~ Welcome to Bingo ~~~")
+        print(f"We have {len(self.boards)} players!\n")
+        for board in self.boards:
+            print(f"Player {board.id}:")
+            board.printout()
+            print('\n')
+
+    def announce_winner(self):
+        print("~~~ We have a winner! ~~~")
+        print(f"The winning board is Player {self.winning_board.id} "
+              f"with a score of {self.score()}\n")
+        self.winning_board.printout()
 
 
-play_bingo('./test_input.txt')
+bingo = Bingo(input_file='./test_input.txt')
+bingo.play()

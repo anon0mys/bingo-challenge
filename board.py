@@ -1,33 +1,47 @@
 class Board:
-    def __init__(self):
-        self.row_key = 1
-        self.rows = {}
+    def __init__(self, id):
+        self.id = id
+        self.row_number = 1
+        self.rows_by_row_number = {}
 
     @property
     def row_count(self):
-        return len(self.rows.values())
+        return len(self.rows)
+
+    @property
+    def rows(self):
+        return self.rows_by_row_number.values()
 
     def add(self, row_input):
         row = [number for number in row_input.strip().split(' ') if number != '']
-        self.rows[self.row_key] = row
-        self.row_key += 1
+        self.rows_by_row_number[self.row_number] = row
+        self.row_number += 1
 
-    def mark(self, number):
-        for row_num in self.rows:
-            row = self.rows[row_num]
-            for i in range(0, len(row)):
-                if row[i] == number:
-                    row[i] = 'X'
-            self.rows[row_num] = row
+    def mark(self, bingo_ball):
+        for row_number in self.rows_by_row_number:
+            row = self.rows_by_row_number[row_number]
+            updated_row = self.mark_if_found(bingo_ball, row)
+            if updated_row:
+                self.rows_by_row_number[row_number] = updated_row
+                break
+
+    def mark_if_found(self, bingo_ball, row):
+        row_length = range(0, len(row))
+        for index in row_length:
+            if row[index] == bingo_ball:
+                row[index] = 'X'
+                return row
 
     def wins(self):
         # Also need to check for columns
-        complete_rows = [row for row in self.rows.values() if len(set(row)) == 1]
+        complete_rows = [row for row in self.rows if len(set(row)) == 1]
+        if any(complete_rows):
+            print("\nBINGO!!\n")
         return any(complete_rows)
 
     def sum_unmarked(self):
-        return sum(int(num) for row in self.rows.values() for num in row if num != 'X')
+        return sum(int(num) for row in self.rows for num in row if num != 'X')
 
     def printout(self):
-        for row in self.rows.values():
+        for row in self.rows:
             print(row)
